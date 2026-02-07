@@ -34,7 +34,7 @@ BEGIN
   VALUES (new.id, new.email, new.raw_user_meta_data->>'name');
   RETURN new;
 EXCEPTION WHEN OTHERS THEN
-  RETURN ERROR 'Database error saving new user'; -- This is likely where the error message comes from if it fails
+  RAISE EXCEPTION 'Database error saving new user';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
