@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About & Contact - MedHistory</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="assets/icons/icon-192x192.png">
+    <style>
+        .about-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: calc(100vh - var(--header-height) - 150px);
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .about-brand {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-brand::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            top: -50%;
+            left: -50%;
+        }
+
+        .about-logo-large {
+            font-size: 8rem;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+            z-index: 1;
+        }
+
+        .about-brand h2 {
+            font-size: 3rem;
+            color: white;
+            z-index: 1;
+            margin: 0;
+            letter-spacing: -2px;
+        }
+
+        .about-content {
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .about-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .about-content p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .mission-item {
+            padding: 1rem;
+            border-left: 4px solid var(--primary-color);
+            background: var(--background-color);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .mission-item h4 {
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .mission-item p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        @media (max-width: 992px) {
+            .about-split {
+                grid-template-columns: 1fr;
+            }
+
+            .about-brand {
+                padding: 4rem 2rem;
+            }
+
+            .about-content {
+                padding: 3rem 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">MedHistory</a>
+                <div class="menu-toggle">☰</div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="about.html" class="active">About & Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mt-2 mb-2">
+        <div class="about-split">
+            <div class="about-brand">
+                <div class="about-logo-large">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"
+                            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M12 8V16" stroke="white" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M8 12H16" stroke="white" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <h2 class="logo"
+                    style="background: none; -webkit-text-fill-color: white; font-size: 3.5rem; margin-top: 1rem;">
+                    MedHistory</h2>
+                <p
+                    style="color: rgba(255,255,255,0.9); font-weight: 500; font-size: 1.1rem; margin-top: 1rem; z-index: 1;">
+                    Secure. Simple. Professional.</p>
+            </div>
+            <div class="about-content">
+                <span
+                    style="color: var(--primary-color); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 0.5rem; display: block;">Transparent
+                    Healthcare</span>
+                <h2>Redefining Medical Data Ownership</h2>
+                <p>MedHistory is built to put you in control. We provide a secure, centralized platform to manage your
+                    complete medical history—ensuring your data is accessible when and where you need it most.</p>
+
+                <div class="mission-grid">
+                    <div class="mission-item">
+                        <h4>Security First</h4>
+                        <p>Encrypted records accessible only by you and your authorized healthcare providers.</p>
+                    </div>
+                    <div class="mission-item">
+                        <h4>Clinical Precision</h4>
+                        <p>Detailed tracking of vitals and history to facilitate accurate medical consultations.</p>
+                    </div>
+                    <div class="mission-item">
+                        <h4>Seamless Sharing</h4>
+                        <p>Easily share verified medical snapshots with specialists via secure, timed access.</p>
+                    </div>
+                    <div class="mission-item">
+                        <h4>Patient Care</h4>
+                        <p>Streamlining the healthcare journey for better outcomes and peace of mind.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section Integrated -->
+        <section id="contact-section" class="mt-2 mb-2">
+            <h2 class="text-center mb-2">Professional Support & Assistance</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+
+                <!-- Contact Info -->
+                <div>
+                    <div class="mb-2"
+                        style="background: white; padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); height: 100%;">
+                        <h3 class="text-primary mb-1">Corporate Relations</h3>
+                        <p class="mb-1" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.2rem;">📧</span>
+                            <strong>Support:</strong> relations@medhistory.care
+                        </p>
+                        <p class="mb-1" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.2rem;">📞</span>
+                            <strong>Inquiries:</strong> +1 (888) MED-HISTORY
+                        </p>
+                        <p style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                            <span style="font-size: 1.2rem;">📍</span>
+                            <strong>Headquarters:</strong><br>
+                            Digital Health Plaza, Suite 400<br>
+                            Innovation Valley, CA 94025
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div
+                    style="background: white; padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Professional Email</label>
+                            <input type="email" id="email" name="email" placeholder="example@corporate.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Detailed Inquiry</label>
+                            <textarea id="message" name="message" rows="5"
+                                placeholder="Please describe your inquiry in detail..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Inquiry</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="login.html">Login</a>
+                <a href="about.html">About & Contact</a>
+            </div>
+            <p>&copy; 2025 MedHistory. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

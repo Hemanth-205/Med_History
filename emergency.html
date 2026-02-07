@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Medical Passport</title>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <style>
+        :root {
+            --medical-red: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--medical-red);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: -70px auto 20px;
+            background: #e2e8f0;
+            display: block;
+            object-fit: cover;
+        }
+
+        .field {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #64748B;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 1.2rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .value.alert {
+            color: var(--medical-red);
+        }
+
+        .footer {
+            background: #f1f5f9;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card" style="max-width: 600px;">
+        <div class="header">
+            <h1 style="margin-bottom: 5px;">Emergency Record</h1>
+            <p>Scanning Critical Medical History...</p>
+        </div>
+
+        <div class="content">
+            <img id="e-photo" src="assets/icons/icon-192x192.png" class="profile-img" alt="Profile">
+
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 id="e-name" style="margin:0; font-size: 1.8rem;">Loading...</h2>
+                <p id="e-demographics" style="color: #64748B; margin: 5px 0; font-size: 1.1rem; font-weight: 600;">...
+                </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 20px;">
+                <div class="field">
+                    <div class="label">Blood Group</div>
+                    <div class="value alert" id="e-blood">-</div>
+                </div>
+                <div class="field">
+                    <div class="label">Emergency Contact</div>
+                    <div class="value" id="e-contact">-</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="label">Primary Allergies & Conditions</div>
+                <div class="value" id="e-allergies" style="color: var(--medical-red);">-</div>
+            </div>
+
+            <!-- Full Medical History Section -->
+            <div style="margin-top: 2rem;">
+                <h3
+                    style="border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 1.1rem; text-transform: uppercase; color: var(--dark); margin-bottom: 1rem;">
+                    📋 Full Medical History</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: #f1f5f9; text-align: left;">
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Date</th>
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Diagnosis</th>
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Treatment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="e-history-body"></tbody>
+                    </table>
+                </div>
+                <p id="h-empty" style="display:none; color: #94a3b8; font-style: italic; margin-top: 10px;">No medical
+                    records found.</p>
+            </div>
+
+            <!-- Recent Vitals Section -->
+            <div style="margin-top: 2rem;">
+                <h3
+                    style="border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 1.1rem; text-transform: uppercase; color: var(--dark); margin-bottom: 1rem;">
+                    🩺 Recent Vitals</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: #f1f5f9; text-align: left;">
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Date</th>
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">BP</th>
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Sugar</th>
+                                <th style="padding: 10px; border-bottom: 1px solid #e2e8f0;">Temp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="e-vitals-body"></tbody>
+                    </table>
+                </div>
+                <p id="v-empty" style="display:none; color: #94a3b8; font-style: italic; margin-top: 10px;">No vital
+                    data found.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="margin-bottom: 10px;">MedHistory Public Access Node</p>
+            <button id="dl-btn" onclick="window.print()"
+                style="padding: 8px 16px; background: var(--dark); color: white; border: none; border-radius: 4px; cursor: pointer;">Print
+                Record</button>
+        </div>
+    </div>
+
+    <!-- html2canvas for downloading card -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        async function loadEmergencyData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+
+            if (!userId) {
+                document.getElementById('e-name').innerText = 'Invalid Scan';
+                return;
+            }
+
+            try {
+                // 1. Fetch Profile
+                const { data: profile } = await window.sb
+                    .from('profiles').select('*').eq('id', userId).single();
+
+                if (profile) {
+                    document.getElementById('e-name').innerText = profile.name || 'Unknown';
+                    document.getElementById('e-demographics').innerText =
+                        `${profile.age || '?'} yrs | ${profile.gender || '-'}`;
+                    document.getElementById('e-blood').innerText = profile.blood_group || 'Unknown';
+                    document.getElementById('e-contact').innerText = profile.emergency_contact || 'None Listed';
+                    document.getElementById('e-allergies').innerText = profile.allergies || 'None';
+                    if (profile.photo_url) document.getElementById('e-photo').src = profile.photo_url;
+                }
+
+                // 2. Fetch Medical Records (History)
+                const { data: records } = await window.sb
+                    .from('medical_records')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('date', { ascending: false });
+
+                const hBody = document.getElementById('e-history-body');
+                if (records && records.length > 0) {
+                    records.forEach(r => {
+                        hBody.innerHTML += `<tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${r.date}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;"><b>${r.diagnosis}</b></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${r.treatment}</td>
+                        </tr>`;
+                    });
+                } else {
+                    document.getElementById('h-empty').style.display = 'block';
+                }
+
+                // 3. Fetch Vitals
+                const { data: vitals } = await window.sb
+                    .from('vitals')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('date', { ascending: false });
+
+                const vBody = document.getElementById('e-vitals-body');
+                if (vitals && vitals.length > 0) {
+                    vitals.forEach(v => {
+                        vBody.innerHTML += `<tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${v.date}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${v.bp}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${v.sugar} mg/dL</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${v.temperature || '-'} °C</td>
+                        </tr>`;
+                    });
+                } else {
+                    document.getElementById('v-empty').style.display = 'block';
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('e-name').innerText = 'Error loading data';
+            }
+        }
+
+        function downloadCard() {
+            const card = document.querySelector('.card');
+            const btn = document.getElementById('dl-btn');
+            btn.style.display = 'none'; // Hide button for screenshot
+
+            html2canvas(document.body).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'medical-emergency-card.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                btn.style.display = 'inline-block'; // Show again
+            });
+        }
+
+        loadEmergencyData();
+    </script>
+</body>
+
+</html>

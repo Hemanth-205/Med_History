@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation - Doctor View</title>
+    <!-- Supabase + Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <style>
+        :root {
+            --primary: #2563EB;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .header-alert {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .expire-alert {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .col-8 {
+            flex: 2;
+        }
+
+        .col-4 {
+            flex: 1;
+        }
+
+        @media(max-width: 768px) {
+            .row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav">
+            <h2 class="logo" style="margin: 0; font-size: 2.2rem;">MedHistory</h2>
+            <div
+                style="font-weight: 700; color: #1e40af; background: #dbeafe; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">
+                DOCTOR PORTAL</div>
+            <button onclick="window.location.href='doctor_index.html'" class="btn"
+                style="background: white; color: #333; border: 1px solid #ccc;">Exit</button>
+        </div>
+
+        <div id="statusAlert" class="header-alert">Validating Session...</div>
+
+        <div id="mainApp" style="display: none;">
+
+            <!-- Patient Header -->
+            <div class="card">
+                <h1 id="pName" style="margin: 0 0 10px 0;">Patient Name</h1>
+                <div style="color: #64748B;">
+                    <span id="pAge">-</span> yrs | <span id="pGender">-</span> | Blood: <span id="pBlood">-</span> |
+                    Allergies: <span id="pAllergies" style="color: #dc2626; font-weight: bold;">-</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left: History -->
+                <div class="col-8">
+                    <div class="card">
+                        <h3>Medical History</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Diagnosis</th>
+                                    <th>Rx / Treatment</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right: Prescription & Vitals Form -->
+                <div class="col-4">
+                    <div class="card" style="border: 2px solid var(--primary);">
+                        <h3>💊 Consultation Entry</h3>
+                        <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 1.5rem;">Record treatment and vital
+                            signs below.</p>
+
+                        <form id="rxForm">
+                            <label>Date</label>
+                            <input type="date" id="rxDate" required>
+
+                            <label>Diagnosis</label>
+                            <input type="text" id="rxDiag" placeholder="e.g. Viral Fever" required>
+
+                            <label>Treatment / Prescription</label>
+                            <textarea id="rxTreat" rows="4" placeholder="e.g. Paracetamol 500mg BD x 3 days..."
+                                required></textarea>
+
+                            <label>Affected Body Part</label>
+                            <select id="rxBodyPart">
+                                <option value="General">General / Whole Body</option>
+                                <option value="Head">Head & Neck</option>
+                                <option value="Chest">Chest & Heart</option>
+                                <option value="Abdomen">Abdomen & Organs</option>
+                                <option value="Arms">Arms & Hands</option>
+                                <option value="Legs">Legs & Feet</option>
+                            </select>
+                            <label>📄 Upload Prescription (Photo/PDF)</label>
+                            <input type="file" id="rxFile" accept="image/*,application/pdf"
+                                style="padding: 5px; border: 1px dashed #cbd5e1;">
+
+                            <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                <h4
+                                    style="margin: 0 0 1rem 0; font-size: 0.9rem; text-transform: uppercase; color: #475569;">
+                                    🩺 Record Vitals</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                    <div>
+                                        <label style="font-size: 0.75rem;">BP (e.g. 120/80)</label>
+                                        <input type="text" id="vBP" placeholder="120/80">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.75rem;">Sugar (mg/dL)</label>
+                                        <input type="number" id="vSugar" placeholder="100">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <label style="font-size: 0.75rem;">Body Temperature (°C)</label>
+                                    <input type="text" id="vTemp" placeholder="37.0">
+                                </div>
+                            </div>
+
+                            <label>Priority</label>
+                            <select id="rxPriority">
+                                <option value="Low">Low (General)</option>
+                                <option value="High">High (Surgery/Critical)</option>
+                            </select>
+
+                            <button type="submit" class="btn" style="width: 100%;">Save Consultation</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let patientId = null;
+        let expiresAt = null;
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (!code) return alert('No code provided');
+
+            // 1. Fetch Snapshot
+            try {
+                // Use Global URL from supabase-config.js if available, or fallback
+                const projectUrl = window.SUPABASE_URL || 'https://mtrgrzdseipzdsdjihzs.supabase.co';
+                const url = `${projectUrl}/storage/v1/object/public/medical_uploads/shares/${code}.json?t=${Date.now()}`; /* Cache bust */
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Invalid or Expired Code');
+
+                const data = await response.json();
+
+                // 2. Check Expiry
+                expiresAt = new Date(data.expiresAt);
+                if (new Date() > expiresAt) {
+                    document.getElementById('statusAlert').className = 'header-alert expire-alert';
+                    document.getElementById('statusAlert').innerText = 'SESSION EXPIRED. Read-only mode.';
+                    document.getElementById('rxForm').querySelector('button').disabled = true;
+                    // We allow read but block write UI
+                } else {
+                    document.getElementById('statusAlert').innerText = `Session Active. Write Access ends at ${expiresAt.toLocaleTimeString()}`;
+                    patientId = data.userId;
+
+                    // Start Countdown
+                    setInterval(() => {
+                        if (new Date() > expiresAt) {
+                            document.getElementById('statusAlert').className = 'header-alert expire-alert';
+                            document.getElementById('statusAlert').innerText = 'SESSION EXPIRED. Access Revoked.';
+                            document.getElementById('rxForm').querySelector('button').disabled = true;
+                            // Optionally hide form
+                        }
+                    }, 1000);
+                }
+
+                // 3. Render
+                renderPatient(data);
+
+            } catch (err) {
+                document.getElementById('statusAlert').innerText = 'Error: ' + err.message;
+                document.getElementById('statusAlert').className = 'header-alert expire-alert';
+            }
+        }
+
+        function renderPatient(data) {
+            document.getElementById('mainApp').style.display = 'block';
+
+            // Profile
+            document.getElementById('pName').innerText = data.profile.name;
+            document.getElementById('pAge').innerText = data.profile.age;
+            document.getElementById('pGender').innerText = data.profile.gender;
+            document.getElementById('pBlood').innerText = data.profile.blood_group || '-';
+            document.getElementById('pAllergies').innerText = data.profile.allergies || 'None';
+
+            // History
+            const tbody = document.getElementById('historyTable');
+            data.records.forEach(r => {
+                tbody.innerHTML += `<tr>
+                    <td>${r.date}</td>
+                    <td><b>${r.diagnosis}</b></td>
+                    <td>${r.treatment}</td>
+                </tr>`;
+            });
+
+            // Set Form Date
+            document.getElementById('rxDate').valueAsDate = new Date();
+        }
+
+        // 4. Handle Insert
+        document.getElementById('rxForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!patientId || new Date() > expiresAt) {
+                alert('Session expired or invalid.');
+                return;
+            }
+
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = 'Saving Data...';
+
+            try {
+                // Step 1: Handle File Upload (Optional)
+                let rxUrl = null;
+                const fileInput = document.getElementById('rxFile');
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_rx.${fileExt}`;
+                    const filePath = `prescriptions/${fileName}`;
+
+                    const { data: uploadData, error: uploadError } = await window.sb.storage
+                        .from('medical_uploads')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = window.sb.storage
+                        .from('medical_uploads')
+                        .getPublicUrl(filePath);
+                    rxUrl = publicUrl;
+                }
+
+                // Step 2: Save Medical Record
+                const record = {
+                    user_id: patientId,
+                    date: document.getElementById('rxDate').value,
+                    diagnosis: document.getElementById('rxDiag').value,
+                    treatment: document.getElementById('rxTreat').value,
+                    priority: document.getElementById('rxPriority').value,
+                    prescription_url: rxUrl,
+                    body_part: document.getElementById('rxBodyPart').value,
+                    doctor: 'Consulting Doctor (On-Portal)'
+                };
+
+                const { error: recordError } = await window.sb
+                    .from('medical_records')
+                    .insert([record]);
+                if (recordError) throw recordError;
+
+                // Step 3: Save Vitals (Optional if fields filled)
+                const bp = document.getElementById('vBP').value;
+                const sugar = document.getElementById('vSugar').value;
+                const temp = document.getElementById('vTemp').value;
+
+                if (bp || sugar || temp) {
+                    const vitalsRecord = {
+                        user_id: patientId,
+                        date: document.getElementById('rxDate').value,
+                        bp: bp || '-',
+                        sugar: sugar ? parseInt(sugar) : 0,
+                        temperature: temp || '-'
+                    };
+
+                    const { error: vitalsError } = await window.sb
+                        .from('vitals')
+                        .insert([vitalsRecord]);
+                    if (vitalsError) throw vitalsError;
+                }
+
+                alert('Complete Consultation Data Saved!');
+                location.reload();
+
+            } catch (err) {
+                alert('Error saving record: ' + err.message);
+                btn.disabled = false;
+                btn.innerText = 'Save Consultation';
+            }
+        });
+
+        init();
+    </script>
+    <footer>
+        <div class="container"
+            style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+            <div class="footer-links" style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem;">
+                <a href="index.html" style="color: #64748B; text-decoration: none;">Home</a>
+                <a href="login.html" style="color: #64748B; text-decoration: none;">Login</a>
+                <a href="about.html" style="color: #64748B; text-decoration: none;">About & Contact</a>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.9rem;">&copy; 2025 MedHistory. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

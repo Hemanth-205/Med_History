@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Hub - MedHistory</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <!-- QRCode JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .share-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .share-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .share-card {
+                padding: 1.5rem;
+            }
+
+            .code-display {
+                font-size: 2rem;
+                min-width: auto;
+                width: 100%;
+                letter-spacing: 2px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .code-display {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: var(--primary-color);
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px dashed #cbd5e1;
+            margin: 1.5rem 0;
+            display: inline-block;
+            min-width: 300px;
+        }
+
+        .timer {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .back-link {
+            display: block;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">MedHistory</a>
+                <ul class="nav-links">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="index.html">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="share-container">
+        <!-- Back Link -->
+        <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+
+        <h1 class="mb-2">Share & Access Hub</h1>
+
+        <!-- 1. Emergency ID Card -->
+        <section class="share-card" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+            <h2 style="color: var(--primary-color);">🚑 Emergency passport</h2>
+            <p class="mb-1">This ID card allows first responders to see your vital info in an emergency.</p>
+
+            <div class="id-card-container">
+                <div class="id-card" id="passportCard">
+                    <div class="id-card-content">
+                        <div>
+                            <div class="id-card-header">MEDHISTORY EMERGENCY ID</div>
+                            <h2 class="id-card-name" id="cardName">Loading...</h2>
+                        </div>
+
+                        <div class="id-card-details">
+                            <div class="id-card-row">
+                                <div>
+                                    <span class="id-card-label">BLOOD GROUP</span>
+                                    <span class="id-card-val" id="cardBlood">-</span>
+                                </div>
+                                <div>
+                                    <span class="id-card-label">GENDER</span>
+                                    <span class="id-card-val" id="cardGender">-</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 0.8rem;">
+                                <span class="id-card-label">EMERGENCY CONTACT</span>
+                                <span class="id-card-val" id="cardContact">-</span>
+                            </div>
+                        </div>
+
+                        <div class="id-card-footer">
+                            <span id="cardId">ID: MH-XXXX-XXXX</span>
+                        </div>
+                    </div>
+
+                    <div class="id-card-qr" id="qrcode">
+                        <!-- QR Code goes here -->
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                <button onclick="window.print()" class="btn btn-secondary">🖨️ Print Card</button>
+            </div>
+        </section>
+
+        <!-- 2. Doctor Consultation (Write Access) -->
+        <section class="share-card" style="border-top: 5px solid var(--primary-color);">
+            <h2>👨‍⚕️ Doctor Consultation</h2>
+            <p>Generate a <strong>5-Minute Access Code</strong> for your doctor to view history AND add prescriptions.
+            </p>
+
+            <div id="consultationSection">
+                <button id="generateCodeBtn" class="btn btn-primary"
+                    style="font-size: 1.2rem; padding: 1rem 2rem;">Generate Access Code</button>
+            </div>
+
+            <div id="codeResult" style="display: none;">
+                <div class="code-display" id="accessCode">Loading...</div>
+                <p>Ask your doctor to visit the <strong>Doctor Portal</strong> and enter this code.</p>
+                <p class="timer">Expires in: <span id="timer">05:00</span></p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        (async () => {
+            // Check Auth
+            const { data: { session } } = await window.sb.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const user = session.user;
+
+            // 0. Fetch Profile for Card
+            const { data: profile } = await window.sb.from('profiles').select('*').eq('id', user.id).single();
+            if (profile) {
+                document.getElementById('cardName').innerText = profile.name;
+                document.getElementById('cardBlood').innerText = profile.blood_group || '-';
+                document.getElementById('cardGender').innerText = profile.gender || '-';
+                document.getElementById('cardContact').innerText = profile.emergency_contact || 'Not Set';
+                document.getElementById('cardId').innerText = `ID: MH-${user.id.substring(0, 4)}-${user.id.substring(user.id.length - 4).toUpperCase()}`;
+            }
+
+            // 1. Emergency QR Logic
+            const emergencyUrl = new URL('emergency.html?id=' + user.id, window.location.href).href;
+            new QRCode(document.getElementById('qrcode'), {
+                text: emergencyUrl,
+                width: 120,
+                height: 120,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+
+            // 2. Consultation Code Logic
+            function generateCode(length) {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let result = '';
+                for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+                return result;
+            }
+
+            document.getElementById('generateCodeBtn').addEventListener('click', async () => {
+                const btn = document.getElementById('generateCodeBtn');
+                btn.disabled = true;
+                btn.textContent = 'Generating...';
+
+                try {
+                    // Fetch Data for Snapshot
+                    const { data: recs } = await window.sb.from('medical_records').select('*').eq('user_id', user.id).order('date', { ascending: false });
+                    const { data: vits } = await window.sb.from('vitals').select('*').eq('user_id', user.id).order('date', { ascending: false });
+                    const { data: profile } = await window.sb.from('profiles').select('*').eq('id', user.id).single();
+
+                    // 5 Minute Expiry
+                    const snapshot = {
+                        generatedAt: new Date().toISOString(),
+                        expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 mins
+                        grantWrite: true,
+                        userId: user.id, // Critical for Write Access
+                        profile: profile,
+                        records: recs || [],
+                        vitals: vits || []
+                    };
+
+                    const code = generateCode(6);
+                    const fileName = `shares/${code}.json`;
+
+                    const blob = new Blob([JSON.stringify(snapshot)], { type: 'application/json' });
+                    const { error } = await window.sb.storage.from('medical_uploads').upload(fileName, blob, {
+                        cacheControl: '300', // 5 min cache
+                        upsert: false
+                    });
+
+                    if (error) throw error;
+
+                    // Show UI
+                    document.getElementById('consultationSection').style.display = 'none';
+                    document.getElementById('codeResult').style.display = 'block';
+                    document.getElementById('accessCode').innerText = code;
+
+                    // Start Timer
+                    startTimer(5 * 60);
+
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Generate Access Code';
+                }
+            });
+        })();
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            const display = document.getElementById('timer');
+            const interval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    display.textContent = "EXPIRED";
+                    document.getElementById('accessCode').style.opacity = '0.5';
+                    document.getElementById('accessCode').innerText = "EXPIRED";
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+
+</html>

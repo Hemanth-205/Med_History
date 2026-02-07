@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MedHistory</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="assets/icons/icon-192x192.png">
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <!-- QRCode JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">MedHistory</a>
+                <div class="menu-toggle">☰</div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="about.html">About & Contact</a></li>
+                    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mt-2 mb-2">
+
+        <!-- Interactive Body Map Feature -->
+        <section class="mb-2" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h2 class="mb-1 text-primary">Visual Health Map</h2>
+                    <p style="color: #64748B; margin-bottom: 1.5rem;">Click any highlighted area on the body to filter
+                        your medical records for that specific region.</p>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button id="resetBodyFilter" class="btn"
+                            style="background: var(--secondary-color); font-size: 0.85rem;">Reset All View</button>
+                        <div id="activePartDisplay"
+                            style="background: #f1f5f9; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; color: var(--primary-color);">
+                            Viewing: All Records</div>
+                    </div>
+                </div>
+
+                <div id="bodyMapSvg"
+                    style="width: 220px; height: 380px; background: #f1f5f9; border-radius: 20px; padding: 1.5rem; display: flex; justify-content: center; align-items: center; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <svg viewBox="0 0 200 400" preserveAspectRatio="xMidYMid meet"
+                        style="height: 100%; width: 100%; cursor: pointer;">
+                        <!-- Defs for filter effects -->
+                        <defs>
+                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="3" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                        <!-- Head & Neck -->
+                        <path id="part-head"
+                            d="M100,10 c12,0 22,10 22,25 s-8,28 -22,32 s-22,-17 -22,-32 s10,-25 22,-25 M90,65 h20 v15 h-20 z"
+                            fill="#cbd5e1" class="body-part-path" />
+                        <!-- Chest & Upper Torso -->
+                        <path id="part-chest" d="M60,90 c0,-15 15,-20 40,-20 s40,5 40,20 v60 h-80 z" fill="#cbd5e1"
+                            class="body-part-path" />
+                        <!-- Abdomen & Pelvis -->
+                        <path id="part-abdomen" d="M60,150 h80 v60 c0,20 -15,30 -40,30 s-40,-10 -40,-30 z"
+                            fill="#cbd5e1" class="body-part-path" />
+                        <!-- Arms (L & R combined for the 'Arms' tag) -->
+                        <path id="part-arms"
+                            d="M55,85 l-30,15 v100 c0,10 5,15 12,15 s12,-5 12,-15 v-95 l6,-5 z M145,85 l30,15 v100 c0,10 -5,15 -12,15 s-12,-5 -12,-15 v-95 l-6,-5 z"
+                            fill="#cbd5e1" class="body-part-path" />
+                        <!-- Legs (L & R combined) -->
+                        <path id="part-legs"
+                            d="M65,245 c5,0 12,5 12,15 v120 c0,10 -5,15 -12,15 s-12,-5 -12,-15 v-120 c0,-10 7,-15 12,-15 z M135,245 c-5,0 -12,5 -12,15 v120 c0,10 5,15 12,15 s12,-5 12,-15 v-120 c0,-10 -7,-15 -12,-15 z"
+                            fill="#cbd5e1" class="body-part-path" />
+                    </svg>
+                </div>
+            </div>
+            <style>
+                .body-part-path {
+                    transition: all 0.3s ease;
+                }
+
+                .body-part-path:hover {
+                    fill: var(--primary-color);
+                    opacity: 0.7;
+                }
+
+                .body-part-path.active {
+                    fill: var(--primary-color);
+                    filter: drop-shadow(0 0 5px var(--primary-color));
+                }
+            </style>
+        </section>
+
+        <!-- Profile Section -->
+        <section class="mb-2" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow);">
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                <!-- Top Row: Profile Info & Buttons -->
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 2rem;">
+
+                    <!-- Profile Info -->
+                    <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                        <div style="position: relative; width: 80px; height: 80px; flex-shrink: 0;">
+                            <img id="profileImage" src="" alt="Profile"
+                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none;">
+                            <div id="profilePlaceholder"
+                                style="width: 100%; height: 100%; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--secondary-color);">
+                                👤</div>
+                            <label for="photoInput"
+                                style="position: absolute; bottom: -5px; right: -5px; background: var(--primary-color); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; font-size: 0.8rem;">✏️</label>
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                        </div>
+
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h2 id="profileName" style="margin: 0; font-size: 1.5rem;">Loading...</h2>
+                                <button id="editProfileBtn" class="btn"
+                                    style="padding: 0.2rem 0.6rem; font-size: 0.75rem; background: var(--secondary-color);">Edit</button>
+                            </div>
+                            <p style="color: var(--secondary-color); margin-top: 0.5rem; font-size: 0.9rem;">
+                                <span id="profileAge">Age: ...</span> |
+                                <span id="profileGender">Gender: ...</span> |
+                                Blood: <span id="profileBlood"
+                                    style="font-weight: bold; color: var(--danger-color);">-</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                        <a href="share.html" class="btn"
+                            style="background: #0f172a; color: white; text-decoration: none; display: inline-flex; align-items: center; font-size: 0.9rem; padding: 0.6rem 1rem;">
+                            🏥 Share / Access
+                        </a>
+                        <button id="downloadPdfBtn" class="btn btn-primary" style="font-size: 0.9rem;">Download
+                            PDF</button>
+                        <button id="deleteAccountBtn" class="btn"
+                            style="background-color: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-text); font-size: 0.9rem;">Delete</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+
+        <!-- Edit Profile Modal -->
+        <div id="editProfileModal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div
+                style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; position: relative;">
+                <h3 class="mb-1">Edit Profile</h3>
+                <form id="editProfileForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Age</label>
+                            <input type="number" id="editAge" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Gender</label>
+                            <select id="editGender" required>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Blood Group</label>
+                        <select id="editBlood">
+                            <option value="">Select...</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Emergency Contact (Phone)</label>
+                        <input type="text" id="editContact" placeholder="+1 234 567 890">
+                    </div>
+                    <div class="form-group">
+                        <label>Allergies / Conditions</label>
+                        <textarea id="editAllergies" rows="2" placeholder="e.g. Peanuts, Diabetes"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+                        <button type="button" class="btn" style="background: #94a3b8;"
+                            onclick="document.getElementById('editProfileModal').style.display='none'">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Medical History Section -->
+        <section class="mb-2">
+            <h2>Medical History</h2>
+
+            <!-- Add New Medical Record Button / Toggle -->
+            <button class="btn btn-primary mb-1"
+                onclick="document.getElementById('addRecordSection').style.display = document.getElementById('addRecordSection').style.display === 'none' ? 'block' : 'none'">
+                + Add New Medical History
+            </button>
+
+            <!-- Add New Medical Record Section -->
+            <section id="addRecordSection" class="mb-2"
+                style="background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow); display: none;">
+                <h3 class="mb-1 text-primary">Add New Medical History</h3>
+                <form id="addRecordForm"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label for="recordPriority">Priority Type</label>
+                        <select id="recordPriority" required>
+                            <option value="Low">Low Priority (General/Minor)</option>
+                            <option value="High">High Priority (Surgery/Major)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordDate">Date</label>
+                        <input type="date" id="recordDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordDiagnosis">Diagnosis</label>
+                        <input type="text" id="recordDiagnosis" placeholder="e.g. Flu / Appendix" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordTreatment">Treatment</label>
+                        <input type="text" id="recordTreatment" placeholder="e.g. Rest / Surgery" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordBodyPart">Body Part (Optional)</label>
+                        <select id="recordBodyPart">
+                            <option value="General">General / Whole Body</option>
+                            <option value="Head">Head & Neck</option>
+                            <option value="Chest">Chest & Heart</option>
+                            <option value="Abdomen">Abdomen & Organs</option>
+                            <option value="Arms">Arms & Hands</option>
+                            <option value="Legs">Legs & Feet</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordDoctor">Doctor/Hospital</label>
+                        <input type="text" id="recordDoctor" placeholder="Dr. Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recordPrescription">Attach Prescription</label>
+                        <input type="file" id="recordPrescription">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="recordNotes">Notes</label>
+                        <textarea id="recordNotes" rows="3" placeholder="Additional details..."></textarea>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn btn-primary">Add Record</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- High Priority Table -->
+            <div class="mb-1">
+                <h3
+                    style="color: var(--danger-color); border-bottom: 2px solid var(--danger-color); padding-bottom: 0.5rem; display: inline-block;">
+                    High Priority (Surgeries / Major)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Diagnosis</th>
+                                <th>Treatment</th>
+                                <th>Doctor</th>
+                                <th>Prescription</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="highPriorityTable">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Low Priority Table -->
+            <div class="mb-1">
+                <h3
+                    style="color: var(--success-color); border-bottom: 2px solid var(--success-color); padding-bottom: 0.5rem; display: inline-block;">
+                    Low Priority (General / Minor)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Diagnosis</th>
+                                <th>Treatment</th>
+                                <th>Doctor</th>
+                                <th>Prescription</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowPriorityTable">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Vitals & Reports Section -->
+        <section class="mb-2">
+            <h2 class="mb-1">Monthly Vitals & Reports</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+
+                <!-- Vitals Table -->
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: var(--shadow);">
+                    <h3 class="mb-1 text-primary">Vitals Log</h3>
+                    <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                        <table style="margin-top: 0;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>BP (Sys/Dia)</th>
+                                    <th>Sugar (mg/dL)</th>
+                                    <th>Temp (°C)</th>
+                                    <th>Report</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vitalsTableBody">
+                                <!-- JS populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vitals Form -->
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: var(--shadow);">
+                    <h3 class="mb-1 text-primary">Add Monthly Vitals</h3>
+                    <form id="addVitalsForm">
+                        <div class="form-group">
+                            <label for="vitalDate">Date</label>
+                            <input type="date" id="vitalDate" required>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="vitalBP">BP (e.g. 120/80)</label>
+                                <input type="text" id="vitalBP" placeholder="120/80" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="vitalSugar">Sugar (mg/dL)</label>
+                                <input type="number" id="vitalSugar" placeholder="100" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="vitalTemp">Temp (°C)</label>
+                                <input type="text" id="vitalTemp" placeholder="37.0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="vitalReport">Blood Report (PDF/Image)</label>
+                            <input type="file" id="vitalReport" accept=".pdf,image/*">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Log Vitals</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Health Graph -->
+            <div class="mt-2" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow);">
+                <h3 class="mb-1">Health Trends (BP & Sugar)</h3>
+                <div style="width: 100%; height: 300px; position: relative;">
+                    <canvas id="healthGraph" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Health Insights Feature (Elite Enhancement) -->
+        <section class="mb-2">
+            <div id="aiInsightCard"
+                style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); color: white; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                <!-- Animated Background Pulse -->
+                <div
+                    style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(59, 130, 246, 0.2); border-radius: 50%; filter: blur(40px); animation: pulse 4s infinite alternate;">
+                </div>
+
+                <div
+                    style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; position: relative; z-index: 1;">
+                    <div
+                        style="flex-shrink: 0; background: rgba(255,255,255,0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; backdrop-filter: blur(5px);">
+                        🧠
+                    </div>
+                    <div style="flex: 1; min-width: 250px;">
+                        <h2 style="margin: 0; color: #60a5fa; font-size: 1.5rem; letter-spacing: 0.5px;">Smart Health
+                            Analysis</h2>
+                        <div id="aiStatus" style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.8rem;">Agentic
+                            Brain: Online & Ready</div>
+
+                        <div id="aiInsightBox"
+                            style="background: rgba(0,0,0,0.2); border-left: 4px solid #60a5fa; padding: 1rem; border-radius: 0 8px 8px 0; font-family: 'Inter', sans-serif; line-height: 1.6;">
+                            Click the button below to analyze your recent clinical data and get personalized health
+                            insights.
+                        </div>
+
+                        <button id="runAiBtn" class="btn"
+                            style="margin-top: 1.2rem; background: #60a5fa; color: #1e293b; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+                            <span>✨ Get Smart Insight</span>
+                            <div id="aiLoader"
+                                style="display: none; width: 15px; height: 15px; border: 2px solid #1e293b; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;">
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="login.html">Login</a>
+                <a href="about.html">About & Contact</a>
+            </div>
+            <p>&copy; 2025 MedHistory. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
