@@ -3,8 +3,8 @@
 // Supabase Configuration
 // IMPORTANT: Get your Project URL and Anon Key from:
 // Supabase Dashboard -> Project Settings -> API
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // Replace with your Project URL
-const SUPABASE_ANON_KEY = 'your_anon_public_key'; // Replace with your Service Role Key (anon public)
+const SUPABASE_URL = 'https://mtrgrzdseipzdsdjihzs.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_9l5Yd4DO7yXXbqVtpcXeJQ_wRaKu08b';
 
 
 // Initialize Supabase Client
